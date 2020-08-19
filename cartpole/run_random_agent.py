@@ -1,7 +1,7 @@
 import time
-import numpy as np
 import pyvirtualdisplay
 from tf_agents.environments import suite_gym
+from tf_agents.policies import random_py_policy
 
 
 display = pyvirtualdisplay.Display(visible=0, size=(1400, 900)).start()
@@ -22,13 +22,20 @@ time_step = env.reset()
 print('Time step:')
 print(time_step)
 
+random_policy = random_py_policy.RandomPyPolicy(
+        env.time_step_spec(),
+        env.action_spec()
+    )
+
 env.reset()
 for i in range(100):
     env.render()
-    action = np.random.choice([0, 1])
-    time_step, reward, discount, observation = env.step(action)
+    action = random_policy.action(time_step=time_step).action
+    print(f'Action: {action}')
+    time_step = env.step(action)
+    step, reward, discount, observation = time_step
     print(f'\nNext time step: {i}')
-    print(f'Time Step: {time_step}')
+    print(f'Step: {step}')
     print(f'Reward: {reward}')
     print(f'Observation: {observation}')
     time.sleep(0.1)
