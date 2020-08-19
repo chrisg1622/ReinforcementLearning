@@ -11,10 +11,10 @@ from tf_agents.policies import random_tf_policy
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.utils import common
 
-from cartpole.utils import compute_avg_return
-from cartpole.utils import collect_data
-from cartpole.utils import collect_step
-from cartpole.utils import create_policy_eval_video
+from core.utils import compute_avg_return
+from core.utils import collect_data
+from core.utils import collect_step
+from core.utils import create_policy_eval_video
 
 
 display = pyvirtualdisplay.Display(visible=0, size=(1400, 900)).start()
