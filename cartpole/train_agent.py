@@ -101,7 +101,7 @@ for _ in range(num_iterations):
 
     step = agent.train_step_counter.numpy()
     if step % log_interval == 0:
-        print('step = {0}: loss = {1}'.format(step, train_loss))
+        print(f'step = {step}: loss = {train_loss}')
     if step % eval_interval == 0:
         avg_return = compute_avg_return(eval_env, agent.policy, num_eval_episodes)
         print(f'step = {step}: Average Return = {avg_return}')
