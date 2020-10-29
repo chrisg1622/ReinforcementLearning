@@ -11,10 +11,9 @@ from tf_agents.policies import random_tf_policy
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.utils import common
 
-from cartpole.utils import compute_avg_return
-from cartpole.utils import collect_data
-from cartpole.utils import collect_step
-from cartpole.utils import create_policy_eval_video
+from core.utils import compute_avg_return
+from core.utils import collect_data
+from core.utils import create_policy_eval_video
 
 
 display = pyvirtualdisplay.Display(visible=0, size=(1400, 900)).start()
@@ -40,28 +39,25 @@ eval_py_env = suite_gym.load(env_name)
 train_env = tf_py_environment.TFPyEnvironment(train_py_env)
 eval_env = tf_py_environment.TFPyEnvironment(eval_py_env)
 
-q_net = q_network.QNetwork(
-    train_env.observation_spec(),
-    train_env.action_spec(),
+q_network = q_network.QNetwork(
+    input_tensor_spec=train_env.observation_spec(),
+    action_spec=train_env.action_spec(),
     fc_layer_params=(100,)
 )
 
-train_step_counter = tf.Variable(0)
-
 agent = dqn_agent.DqnAgent(
-    train_env.time_step_spec(),
-    train_env.action_spec(),
-    q_network=q_net,
+    time_step_spec=train_env.time_step_spec(),
+    action_spec=train_env.action_spec(),
+    q_network=q_network,
     optimizer=tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate),
     td_errors_loss_fn=common.element_wise_squared_loss,
-    train_step_counter=train_step_counter
+    train_step_counter=tf.Variable(0)
 )
-
 agent.initialize()
 
 random_policy = random_tf_policy.RandomTFPolicy(
-    train_env.time_step_spec(),
-    train_env.action_spec()
+    time_step_spec=train_env.time_step_spec(),
+    action_spec=train_env.action_spec()
 )
 
 average_return = tf_metrics.AverageReturnMetric()
@@ -96,20 +92,16 @@ avg_return = compute_avg_return(eval_env, agent.policy, num_eval_episodes)
 returns = [avg_return]
 
 for _ in range(num_iterations):
-
-    # Collect a few steps using collect_policy and save to the replay buffer.
-    for _ in range(collect_steps_per_iteration):
-        collect_step(train_env, agent.collect_policy, replay_buffer)
+    # Collect a few steps using collect_policy and save to the replay buffer
+    collect_data(environment=train_env, policy=agent.collect_policy, buffer=replay_buffer, steps=collect_steps_per_iteration)
 
     # Sample a batch of data from the buffer and update the agent's network.
     experience, unused_info = next(iterator)
     train_loss = agent.train(experience).loss
 
     step = agent.train_step_counter.numpy()
-
     if step % log_interval == 0:
-        print('step = {0}: loss = {1}'.format(step, train_loss))
-
+        print(f'step = {step}: loss = {train_loss}')
     if step % eval_interval == 0:
         avg_return = compute_avg_return(eval_env, agent.policy, num_eval_episodes)
         print(f'step = {step}: Average Return = {avg_return}')
